@@ -2,16 +2,16 @@ package realisticnn;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Neuron {
 
     private volatile List<Neuron> inputs;
     private volatile List<Neuron> outputs;
     private volatile List<Double> weights;
+    private volatile List<Neuron> presynaptic;
     private volatile double potential;
-    private volatile Neuron presynaptic;
-    private final ReentrantLock lock;
+    private volatile double firePotential;
+    private volatile boolean readyToFire;
     private static final double DEFAULT_WEIGHT = 0.0;
     private static final double POTENTIAL_THRESHOLD = 1.0;
 
@@ -20,9 +20,10 @@ public class Neuron {
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
         weights = new ArrayList<>();
+        presynaptic = new ArrayList<>();
         potential = 0;
-        presynaptic = null;
-        lock = new ReentrantLock();
+        firePotential = 0;
+        readyToFire = false;
     }
 
     public static void connect(Neuron sender, Neuron receiver) {
@@ -40,29 +41,25 @@ public class Neuron {
         receiver.removeInput(sender);
     }
 
+    public void prepareToFire() {
+        firePotential = potential;
+        potential = 0;
+        readyToFire = true;
+    }
+
     public void fire() {
-        lock.lock();
-        try {
-            for (Neuron output : outputs) {
-                output.activate(this, potential);
-            }
-            potential = 0;
-        } finally {
-            lock.unlock();
+        for (Neuron output : outputs) {
+            output.activate(this, firePotential);
         }
+        presynaptic.clear();
+        readyToFire = false;
     }
 
     public void activate(Neuron sender, double signal) {
-        lock.lock();
-        try {
-            presynaptic = sender;
-            double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
-            addPotential(delta);
-            if (potential >= POTENTIAL_THRESHOLD) {
-                System.out.println(weights.get(inputs.indexOf(sender)));
-            }
-        } finally {
-            lock.unlock();
+        double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
+        potential += delta;
+        if (potential >= POTENTIAL_THRESHOLD) {
+            presynaptic.add(sender);
         }
     }
 
@@ -136,6 +133,10 @@ public class Neuron {
         outputs.remove(index);
     }
 
+    public void clearPresynapticNeurons() {
+        presynaptic.clear();
+    }
+
     public List<Neuron> getInputs() {
         return inputs;
     }
@@ -160,13 +161,21 @@ public class Neuron {
         return potential;
     }
 
+    public double getLastFiredPotential() {
+        return firePotential;
+    }
+
+    public boolean isReadyToFire() {
+        return readyToFire;
+    }
+
     public double output() {
         double output = potential;
         potential = 0;
         return output;
     }
 
-    public Neuron getPresynapticNeuron() {
+    public List<Neuron> getPresynapticNeurons() {
         return presynaptic;
     }
 }

@@ -8,6 +8,7 @@ public class NeuralNetwork {
     private volatile List<Neuron> input;
     private volatile List<Neuron> hidden;
     private volatile List<Neuron> output;
+    private volatile double reward;
     private volatile boolean running;
     private static final double POTENTIAL_THRESHOLD = 1.0;
 
@@ -15,6 +16,7 @@ public class NeuralNetwork {
         input = new ArrayList<>();
         hidden = new ArrayList<>();
         output = new ArrayList<>();
+        reward = 0;
         running = false;
     }
 
@@ -33,55 +35,72 @@ public class NeuralNetwork {
         }
     }
 
-//    public void start(boolean train) {
-//        running = true;
-//        new Thread(() -> {
-//            while (running) {
-//                for (Neuron hiddenNeuron : hidden) {
-//                    if (hiddenNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
-//                        Neuron presynaptic = hiddenNeuron.getPresynapticNeuron();
-//                        hiddenNeuron.fire();
-//                        if (train) {
-//                            hiddenNeuron.changeWeight(presynaptic, 0.01);
-//                            System.out.println(hiddenNeuron.getWeight(presynaptic));
-//                        }
-//                    }
-//                }
-//                for (Neuron outputNeuron : output) {
-//                    if (outputNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
-//                        System.out.println(output.indexOf(outputNeuron) + ":" + outputNeuron.output());
-//                    }
-//                }
-//            }
-//        }).start();
-//    }
-
     public void start(boolean train) {
         running = true;
-        for (Neuron hiddenNeuron : hidden) {
-            new Thread(() -> {
-                while (running) {
-                    if (hiddenNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
-                        Neuron presynaptic = hiddenNeuron.getPresynapticNeuron();
+        new Thread(() -> {
+            while (running) {
+                for (Neuron hiddenNeuron : hidden) {
+                    if (hiddenNeuron.isReadyToFire()) {
+                        List<Neuron> presynaptic = hiddenNeuron.getPresynapticNeurons();
+                        //for (Neuron neuron : presynaptic) {
+                            //System.out.println(hiddenNeuron.getWeight(neuron));
+                        //}
                         hiddenNeuron.fire();
-                        if (train) {
-                            //hiddenNeuron.changeWeight(presynaptic, 0.01);
-                            //System.out.println(hiddenNeuron.getWeight(presynaptic));
-                        }
                     }
                 }
-            }).start();
-        }
-        for (Neuron outputNeuron : output) {
-            new Thread(() -> {
-                while (running) {
+                for (Neuron hiddenNeuron : hidden) {
+                    if (hiddenNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
+                        hiddenNeuron.prepareToFire();
+//                        ArrayList<Neuron> presynaptic = new ArrayList<>(hiddenNeuron.getPresynapticNeurons());
+//                        hiddenNeuron.fire();
+//                        hiddenNeuron.clearPresynapticNeurons();
+//                        if (train) {
+//                            if (reward != 0) {
+//                                for (Neuron sender : presynaptic) {
+//
+//                                }
+//                                reward = 0;
+//                            }
+//                            //hiddenNeuron.changeWeight(presynaptic.get(0), 0.01);
+//                            //System.out.println(hiddenNeuron.getWeight(presynaptic.get(0)));
+//                        }
+                    }
+                }
+                for (Neuron outputNeuron : output) {
                     if (outputNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
                         System.out.println(output.indexOf(outputNeuron) + ":" + outputNeuron.output());
                     }
                 }
-            }).start();
-        }
+            }
+        }).start();
     }
+
+//    public void start(boolean train) {
+//        running = true;
+//        for (Neuron hiddenNeuron : hidden) {
+//            new Thread(() -> {
+//                while (running) {
+//                    if (hiddenNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
+//                        Neuron presynaptic = hiddenNeuron.getPresynapticNeuron();
+//                        hiddenNeuron.fire();
+//                        if (train) {
+//                            //hiddenNeuron.changeWeight(presynaptic, 0.01);
+//                            //System.out.println(hiddenNeuron.getWeight(presynaptic));
+//                        }
+//                    }
+//                }
+//            }).start();
+//        }
+//        for (Neuron outputNeuron : output) {
+//            new Thread(() -> {
+//                while (running) {
+//                    if (outputNeuron.getStoredPotential() >= POTENTIAL_THRESHOLD) {
+//                        System.out.println(output.indexOf(outputNeuron) + ":" + outputNeuron.output());
+//                    }
+//                }
+//            }).start();
+//        }
+//    }
 
     public void stop() {
         running = false;
@@ -91,13 +110,14 @@ public class NeuralNetwork {
         new Thread(() -> {
             for (Neuron inputNeuron : input) {
                 inputNeuron.setStoredPotential(inputVector.get(input.indexOf(inputNeuron)));
+                inputNeuron.prepareToFire();
                 inputNeuron.fire();
             }
         }).start();
     }
 
     public void reward(double reward) {
-
+        reward += reward;
     }
 
     public void randomizeConnections(int extraConnections) {
@@ -121,17 +141,17 @@ public class NeuralNetwork {
         }
     }
 
-    public void randomizeWeights(double signRatio) {
+    public void randomizeWeights() {
         for (Neuron hiddenNeuron : hidden) {
-            double range = POTENTIAL_THRESHOLD / Math.sqrt(hiddenNeuron.getInputs().size());
+            //double range = Util.logit(0.5 * POTENTIAL_THRESHOLD / Math.sqrt(hiddenNeuron.getInputs().size()) + 0.5);
             for (Neuron sender : hiddenNeuron.getInputs()) {
-                hiddenNeuron.setWeight(sender, Util.randDouble(-range / signRatio, range));
+                hiddenNeuron.setWeight(sender, Util.randDouble(-1, 1));
             }
         }
         for (Neuron outputNeuron : output) {
-            double range = POTENTIAL_THRESHOLD / Math.sqrt(outputNeuron.getInputs().size());
+            //double range = POTENTIAL_THRESHOLD / Math.sqrt(outputNeuron.getInputs().size());
             for (Neuron sender : outputNeuron.getInputs()) {
-                outputNeuron.setWeight(sender, Util.randDouble(-range / signRatio, range));
+                outputNeuron.setWeight(sender, Util.randDouble(-1, 1));
             }
         }
     }
@@ -194,6 +214,10 @@ public class NeuralNetwork {
 
     public List<Neuron> getOutputNeurons() {
         return output;
+    }
+
+    public double getCurrentReward() {
+        return reward;
     }
 
     public boolean isRunning() {

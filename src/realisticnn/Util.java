@@ -15,4 +15,8 @@ public class Util {
     public static double sigmoid(double input) {
         return 1 / (1 + Math.exp(-input));
     }
+
+    public static double logit(double input) {
+        return -Math.log(1 / input - 1);
+    }
 }

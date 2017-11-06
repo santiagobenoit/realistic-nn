@@ -9,14 +9,14 @@ public class Main {
     public static void main(String[] args) {
         NeuralNetwork network = new NeuralNetwork(10, 100, 10);
         network.randomizeConnections(1000);
-        network.randomizeWeights(2.0);
+        network.randomizeWeights();
         System.out.println("Initialized");
         network.start(true);
         new Thread(() -> {
             while (true) {
                 network.input(Arrays.asList(1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d));
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

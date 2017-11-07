@@ -57,6 +57,7 @@ public class Neuron {
 
     public void activate(Neuron sender, double signal) {
         double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
+        //double delta = signal * weights.get(inputs.indexOf(sender));
         potential += delta;
         if (potential >= POTENTIAL_THRESHOLD) {
             presynaptic.add(sender);

@@ -107,13 +107,13 @@ public class NeuralNetwork {
     }
 
     public void input(List<Double> inputVector) {
-        new Thread(() -> {
-            for (Neuron inputNeuron : input) {
+        for (Neuron inputNeuron : input) {
+            new Thread(() -> {
                 inputNeuron.setStoredPotential(inputVector.get(input.indexOf(inputNeuron)));
                 inputNeuron.prepareToFire();
                 inputNeuron.fire();
-            }
-        }).start();
+            }).start();
+        }
     }
 
     public void reward(double reward) {

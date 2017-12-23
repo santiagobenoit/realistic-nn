@@ -45,19 +45,21 @@ public class Neuron {
         firePotential = potential;
         potential = 0;
         readyToFire = true;
+        //System.out.println("hello");
     }
 
     public void fire() {
+
         for (Neuron output : outputs) {
-            output.activate(this, firePotential);
+            output.activate(this, 1);
         }
         presynaptic.clear();
         readyToFire = false;
     }
 
     public void activate(Neuron sender, double signal) {
-        double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
-        //double delta = signal * weights.get(inputs.indexOf(sender));
+        //double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
+        double delta = signal * weights.get(inputs.indexOf(sender));
         potential += delta;
         if (potential >= POTENTIAL_THRESHOLD) {
             presynaptic.add(sender);

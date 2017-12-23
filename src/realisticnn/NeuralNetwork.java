@@ -41,11 +41,13 @@ public class NeuralNetwork {
             while (running) {
                 for (Neuron hiddenNeuron : hidden) {
                     if (hiddenNeuron.isReadyToFire()) {
-                        List<Neuron> presynaptic = hiddenNeuron.getPresynapticNeurons();
+                        //List<Neuron> presynaptic = hiddenNeuron.getPresynapticNeurons();
                         //for (Neuron neuron : presynaptic) {
                             //System.out.println(hiddenNeuron.getWeight(neuron));
                         //}
                         hiddenNeuron.fire();
+                        //System.out.println(hidden.indexOf(hiddenNeuron));
+                        //System.out.println("hello");
                     }
                 }
                 for (Neuron hiddenNeuron : hidden) {
@@ -123,6 +125,7 @@ public class NeuralNetwork {
     public void randomizeConnections(int extraConnections) {
         for (Neuron inputNeuron : input) {
             Neuron.connect(inputNeuron, hidden.get(Util.randInt(0, hidden.size())));
+
         }
         for (int i = 1; i < hidden.size(); i++) {
             Neuron.connect(hidden.get(i - 1), hidden.get(i));

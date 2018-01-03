@@ -1,29 +1,34 @@
 package realisticnn;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Neuron {
+public class Neuron implements Serializable {
 
     private volatile List<Neuron> inputs;
     private volatile List<Neuron> outputs;
     private volatile List<Double> weights;
-    private volatile List<Neuron> presynaptic;
+    //private volatile List<Neuron> presynaptic;
     private volatile double potential;
-    private volatile double firePotential;
+    //private volatile double firePotential;
     private volatile boolean readyToFire;
+    private final NeuralNetwork neuralNetwork;
     private static final double DEFAULT_WEIGHT = 0.0;
     private static final double POTENTIAL_THRESHOLD = 1.0;
+    private static final double MIN_THRESHOLD = 0.1;
+    private static final double WEIGHT_LIMIT = 1.0;
 
 
-    public Neuron() {
+    public Neuron(NeuralNetwork parent) {
         inputs = new ArrayList<>();
         outputs = new ArrayList<>();
         weights = new ArrayList<>();
-        presynaptic = new ArrayList<>();
+        //presynaptic = new ArrayList<>();
         potential = 0;
-        firePotential = 0;
+        //firePotential = 0;
         readyToFire = false;
+        neuralNetwork = parent;
     }
 
     public static void connect(Neuron sender, Neuron receiver) {
@@ -42,25 +47,33 @@ public class Neuron {
     }
 
     public void prepareToFire() {
-        firePotential = potential;
+        //firePotential = potential;
         potential = 0;
         readyToFire = true;
     }
 
-    public void fire() {
+    public void fire(boolean train, double lr) {
         for (Neuron output : outputs) {
-            output.activate(this, firePotential);
+            output.activate(this, POTENTIAL_THRESHOLD, train, lr);
         }
-        presynaptic.clear();
+        //presynaptic.clear();
         readyToFire = false;
     }
 
-    public void activate(Neuron sender, double signal) {
-        double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
-        //double delta = signal * weights.get(inputs.indexOf(sender));
+    private synchronized void activate(Neuron sender, double signal, boolean train, double lr) {
+
+        //double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
+        double delta = signal * weights.get(inputs.indexOf(sender));
         potential += delta;
-        if (potential >= POTENTIAL_THRESHOLD) {
-            presynaptic.add(sender);
+        if (train) {
+            if (potential >= POTENTIAL_THRESHOLD) {
+                //System.out.println("+");
+                //presynaptic.add(sender);
+                changeWeight(sender, lr);
+            } else if (readyToFire) {
+                //System.out.println("-");
+                changeWeight(sender, -lr);
+            }
         }
     }
 
@@ -86,6 +99,11 @@ public class Neuron {
 
     public void changeWeight(Neuron input, double delta) {
         double newWeight = weights.get(inputs.indexOf(input)) + delta;
+        if (newWeight > WEIGHT_LIMIT) {
+            newWeight = WEIGHT_LIMIT;
+        } else if (newWeight < -WEIGHT_LIMIT) {
+            newWeight = -WEIGHT_LIMIT;
+        }
         setWeight(input, newWeight);
     }
 
@@ -112,7 +130,7 @@ public class Neuron {
         outputs.add(output);
     }
 
-    public void addPotential(double delta) {
+    public synchronized void addPotential(double delta) {
         potential += delta;
     }
 
@@ -134,9 +152,9 @@ public class Neuron {
         outputs.remove(index);
     }
 
-    public void clearPresynapticNeurons() {
-        presynaptic.clear();
-    }
+//    public void clearPresynapticNeurons() {
+//        presynaptic.clear();
+//    }
 
     public List<Neuron> getInputs() {
         return inputs;
@@ -162,21 +180,28 @@ public class Neuron {
         return potential;
     }
 
-    public double getLastFiredPotential() {
-        return firePotential;
-    }
+//    public double getLastFiredPotential() {
+//        return firePotential;
+//    }
 
     public boolean isReadyToFire() {
         return readyToFire;
     }
 
-    public double output() {
-        double output = potential;
-        potential = 0;
-        return output;
+    public boolean potentialExceedsThreshold() {
+        return potential >= POTENTIAL_THRESHOLD;
     }
 
-    public List<Neuron> getPresynapticNeurons() {
-        return presynaptic;
+//    public double output() {
+//        potential = 0;
+//        return POTENTIAL_THRESHOLD;
+//    }
+
+//    public List<Neuron> getPresynapticNeurons() {
+//        return presynaptic;
+//    }
+
+    public NeuralNetwork getNeuralNetwork() {
+        return neuralNetwork;
     }
 }

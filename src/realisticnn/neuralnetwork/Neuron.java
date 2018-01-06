@@ -1,4 +1,4 @@
-package realisticnn;
+package realisticnn.neuralnetwork;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -46,6 +46,10 @@ public class Neuron implements Serializable {
         receiver.removeInput(sender);
     }
 
+    public static boolean connected(Neuron neuron1, Neuron neuron2) {
+        return (neuron1.outputs.contains(neuron2) && neuron2.inputs.contains(neuron1)) || (neuron1.inputs.contains(neuron2) && neuron2.outputs.contains(neuron1));
+    }
+
     public void prepareToFire() {
         //firePotential = potential;
         potential = 0;
@@ -61,7 +65,6 @@ public class Neuron implements Serializable {
     }
 
     private synchronized void activate(Neuron sender, double signal, boolean train, double lr) {
-
         //double delta = signal * (2 * POTENTIAL_THRESHOLD * Util.sigmoid(weights.get(inputs.indexOf(sender))) - POTENTIAL_THRESHOLD);
         double delta = signal * weights.get(inputs.indexOf(sender));
         potential += delta;

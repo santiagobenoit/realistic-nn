@@ -1,15 +1,19 @@
-package realisticnn;
+package realisticnn.neuralnetwork;
+
+import realisticnn.environment.Environment;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class NeuralNetwork implements Serializable {
 
-    private volatile List<Neuron> input;
-    private volatile List<Neuron> hidden;
-    private volatile List<Neuron> output;
-    private volatile double reward;
+    private List<Neuron> input;
+    private List<Neuron> hidden;
+    private List<Neuron> output;
+    private Environment environment;
+    //private volatile double reward;
     private volatile boolean running;
     private static final double POTENTIAL_THRESHOLD = 1.0;
     private static final double DEFAULT_LR = 0.01;
@@ -18,7 +22,8 @@ public class NeuralNetwork implements Serializable {
         input = new ArrayList<>();
         hidden = new ArrayList<>();
         output = new ArrayList<>();
-        reward = 0;
+        environment = null;
+        //reward = 0;
         running = false;
     }
 
@@ -35,7 +40,7 @@ public class NeuralNetwork implements Serializable {
         for (int i = 0; i < outputs; i++) {
             output.add(new Neuron(this));
         }
-        reward = 0;
+        //reward = 0;
         running = false;
     }
 
@@ -62,7 +67,10 @@ public class NeuralNetwork implements Serializable {
                 for (Neuron neuron : output) {
                     if (neuron.isReadyToFire()) {
                         neuron.fire(train, lr);
-                        System.out.println(output.indexOf(neuron));
+                        if (environment != null) {
+                            environment.interact(output.indexOf(neuron));
+                        }
+                        //System.out.println(output.indexOf(neuron));
                     }
                 }
                 for (Neuron neuron : input) {
@@ -119,6 +127,13 @@ public class NeuralNetwork implements Serializable {
 //                }
             }
         }).start();
+//        if (environment != null) {
+//            new Thread(() -> {
+//                while (running) {
+//                    input(environment.getStimuli());
+//                }
+//            }).start();
+//        }
     }
 
 //    public void start(boolean train) {
@@ -152,32 +167,32 @@ public class NeuralNetwork implements Serializable {
         running = false;
     }
 
-    public void input(List<Double> inputVector) {
+    public void input(double[] inputVector) {
         new Thread(() -> {
             for (Neuron inputNeuron : input) {
-                inputNeuron.addPotential(inputVector.get(input.indexOf(inputNeuron)));
+                inputNeuron.addPotential(inputVector[input.indexOf(inputNeuron)]);
             }
         }).start();
     }
 
-    public void reward(double reward) {
-        reward += reward;
-    }
+//    public void reward(double reward) {
+//        this.reward += reward;
+//    }
 
     public void randomizeConnections(int extraConnections) {
         for (Neuron inputNeuron : input) {
-            Neuron.connect(inputNeuron, hidden.get(Util.randInt(0, hidden.size())));
+            Neuron.connect(inputNeuron, hidden.get(randInt(0, hidden.size())));
         }
         for (int i = 1; i < hidden.size(); i++) {
             Neuron.connect(hidden.get(i - 1), hidden.get(i));
         }
         for (Neuron outputNeuron : output) {
-            Neuron.connect(hidden.get(Util.randInt(0, hidden.size())), outputNeuron);
+            Neuron.connect(hidden.get(randInt(0, hidden.size())), outputNeuron);
         }
         int i = 0;
         while (i < extraConnections) {
-            Neuron sender = hidden.get(Util.randInt(0, hidden.size()));
-            Neuron receiver = hidden.get(Util.randInt(0, hidden.size()));
+            Neuron sender = hidden.get(randInt(0, hidden.size()));
+            Neuron receiver = hidden.get(randInt(0, hidden.size()));
             if (sender != receiver && !sender.getOutputs().contains(receiver) && !receiver.getOutputs().contains(sender)) {
                 Neuron.connect(sender, receiver);
                 i++;
@@ -201,8 +216,13 @@ public class NeuralNetwork implements Serializable {
             //System.out.println(i / s2);
             for (Neuron neuron2 : hidden) {
                 //i++;
-                if (neuron1 != neuron2) {
-                    Neuron.connect(neuron1, neuron2);
+                if (neuron1 != neuron2 && !Neuron.connected(neuron1, neuron2)) {
+                    if (randInt(0, 2) == 0) {
+                        Neuron.connect(neuron1, neuron2);
+                    } else {
+                        Neuron.connect(neuron2, neuron1);
+                    }
+
                 }
             }
         }
@@ -225,7 +245,7 @@ public class NeuralNetwork implements Serializable {
             double range = POTENTIAL_THRESHOLD / Math.sqrt(hiddenNeuron.getInputs().size());
             //System.out.println(range);
             for (Neuron sender : hiddenNeuron.getInputs()) {
-                hiddenNeuron.setWeight(sender, Util.randDouble(-range, range));
+                hiddenNeuron.setWeight(sender, randDouble(-range, range));
             }
         }
         for (Neuron outputNeuron : output) {
@@ -233,7 +253,7 @@ public class NeuralNetwork implements Serializable {
             double range = POTENTIAL_THRESHOLD / Math.sqrt(outputNeuron.getInputs().size());
             //System.out.println(range);
             for (Neuron sender : outputNeuron.getInputs()) {
-                outputNeuron.setWeight(sender, Util.randDouble(-range, range));
+                outputNeuron.setWeight(sender, randDouble(-range, range));
             }
         }
     }
@@ -286,6 +306,14 @@ public class NeuralNetwork implements Serializable {
         output.remove(index);
     }
 
+    public void setEnvironment(Environment environment) {
+        if (running) {
+            // TODO raise exception
+        } else {
+            this.environment = environment;
+        }
+    }
+
     public List<Neuron> getInputNeurons() {
         return input;
     }
@@ -298,11 +326,23 @@ public class NeuralNetwork implements Serializable {
         return output;
     }
 
-    public double getCurrentReward() {
-        return reward;
+    public Environment getEnvironment() {
+        return environment;
     }
+
+    //    public double getCurrentReward() {
+//        return reward;
+//    }
 
     public boolean isRunning() {
         return running;
+    }
+
+    private static int randInt(int origin, int bound) {
+        return ThreadLocalRandom.current().nextInt(origin, bound);
+    }
+
+    private static double randDouble(double origin, double bound) {
+        return ThreadLocalRandom.current().nextDouble(origin, bound);
     }
 }

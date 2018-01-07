@@ -4,8 +4,10 @@ import realisticnn.environment.Environment;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 public class NeuralNetwork implements Serializable {
 
@@ -70,7 +72,7 @@ public class NeuralNetwork implements Serializable {
                         if (environment != null) {
                             environment.interact(output.indexOf(neuron));
                         }
-                        //System.out.println(output.indexOf(neuron));
+                        System.out.println(output.indexOf(neuron));
                     }
                 }
                 for (Neuron neuron : input) {
@@ -179,23 +181,65 @@ public class NeuralNetwork implements Serializable {
 //        this.reward += reward;
 //    }
 
-    public void randomizeConnections(int extraConnections) {
-        for (Neuron inputNeuron : input) {
-            Neuron.connect(inputNeuron, hidden.get(randInt(0, hidden.size())));
+//    public void randomizeConnections(int extraConnections) {
+//        for (Neuron inputNeuron : input) {
+//            Neuron.connect(inputNeuron, hidden.get(randInt(0, hidden.size())));
+//        }
+//        for (int i = 1; i < hidden.size(); i++) {
+//            Neuron.connect(hidden.get(i - 1), hidden.get(i));
+//        }
+//        for (Neuron outputNeuron : output) {
+//            Neuron.connect(hidden.get(randInt(0, hidden.size())), outputNeuron);
+//        }
+//        int i = 0;
+//        while (i < extraConnections) {
+//            Neuron sender = hidden.get(randInt(0, hidden.size()));
+//            Neuron receiver = hidden.get(randInt(0, hidden.size()));
+//            if (sender != receiver && !sender.getOutputs().contains(receiver) && !receiver.getOutputs().contains(sender)) {
+//                Neuron.connect(sender, receiver);
+//                i++;
+//            }
+//        }
+//    }
+
+    public void randomlyConnect(int connectionsPerNeuron) {
+        //double i = 0;
+        for (Neuron n1 : input) {
+            //System.out.println(i / input.size());
+            //i++;
+            List<Neuron> sample = new ArrayList<>(hidden);
+            Collections.shuffle(sample);
+            sample = sample.subList(0, connectionsPerNeuron);
+            for (Neuron n2 : sample) {
+                Neuron.connect(n1, n2);
+            }
         }
-        for (int i = 1; i < hidden.size(); i++) {
-            Neuron.connect(hidden.get(i - 1), hidden.get(i));
+        //i = 0;
+        for (Neuron n1 : hidden) {
+            //System.out.println(i / hidden.size());
+            //i++;
+            List<Neuron> sample = new ArrayList<>(hidden).stream()
+                    .filter(n -> n != n1 && !Neuron.connected(n, n1))
+                    .collect(Collectors.toList());
+            Collections.shuffle(sample);
+            sample = sample.subList(0, connectionsPerNeuron);
+            for (Neuron n2 : sample) {
+                if (randInt(0, 2) == 0) {
+                    Neuron.connect(n1, n2);
+                } else {
+                    Neuron.connect(n2, n1);
+                }
+            }
         }
-        for (Neuron outputNeuron : output) {
-            Neuron.connect(hidden.get(randInt(0, hidden.size())), outputNeuron);
-        }
-        int i = 0;
-        while (i < extraConnections) {
-            Neuron sender = hidden.get(randInt(0, hidden.size()));
-            Neuron receiver = hidden.get(randInt(0, hidden.size()));
-            if (sender != receiver && !sender.getOutputs().contains(receiver) && !receiver.getOutputs().contains(sender)) {
-                Neuron.connect(sender, receiver);
-                i++;
+        //i = 0;
+        for (Neuron n1 : output) {
+            //System.out.println(i / output.size());
+            //i++;
+            List<Neuron> sample = new ArrayList<>(hidden);
+            Collections.shuffle(sample);
+            sample = sample.subList(0, connectionsPerNeuron);
+            for (Neuron n2 : sample) {
+                Neuron.connect(n2, n1);
             }
         }
     }

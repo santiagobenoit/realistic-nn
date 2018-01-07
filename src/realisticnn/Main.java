@@ -13,15 +13,15 @@ public class Main { // temporary test class
         System.out.println("Creating neurons...");
         NeuralNetwork network = new NeuralNetwork(2049, 10000, 11);
         System.out.println("Connecting neurons...");
-        //network.randomizeConnections(1000);
-        network.fullyConnect();
+        network.randomlyConnect(100);
+        //network.fullyConnect();
         System.out.println("Initializing weights...");
         network.randomizeWeights();
         System.out.println("Initializing environment...");
         Environment environment = new EnvironmentChat();
         environment.addNeuralNetwork(network);
         System.out.println("Done. Starting simulation...");
-        environment.start();
+        environment.start(100);
         //new Thread(() -> {
             //while (network.isRunning()) {
                 //network.input(Arrays.asList(1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d, 1d));

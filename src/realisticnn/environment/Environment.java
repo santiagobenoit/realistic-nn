@@ -16,7 +16,7 @@ public abstract class Environment implements Serializable {
         running = false;
     }
 
-    public void start() {
+    public void start(long delay) {
         if (running) {
             //TODO
         } else {
@@ -25,6 +25,13 @@ public abstract class Environment implements Serializable {
                 network.start(true);
                 new Thread(() -> {
                     while (running) {
+                        if (delay > 0) {
+                            try {
+                                Thread.sleep(delay);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         network.input(getStimuli());
                     }
                 }).start();

@@ -50,13 +50,13 @@ public class Neuron implements Serializable {
         return (neuron1.outputs.contains(neuron2) && neuron2.inputs.contains(neuron1)) || (neuron1.inputs.contains(neuron2) && neuron2.outputs.contains(neuron1));
     }
 
-    public void prepareToFire() {
+    public synchronized void prepareToFire() {
         //firePotential = potential;
-        potential = 0;
+        potential -= POTENTIAL_THRESHOLD;
         readyToFire = true;
     }
 
-    public void fire(boolean train, double lr) {
+    public synchronized void fire(boolean train, double lr) {
         for (Neuron output : outputs) {
             output.activate(this, POTENTIAL_THRESHOLD, train, lr);
         }

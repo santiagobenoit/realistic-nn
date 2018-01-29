@@ -254,8 +254,7 @@ public class NeuralNetwork implements Serializable {
                 Neuron.connect(neuron1, neuron2);
             }
         }
-        //i = 0;
-        //double s2 = hidden.size() * hidden.size();
+        //i = 0;        //double s2 = hidden.size() * hidden.size();
         for (Neuron neuron1 : hidden) {
             //System.out.println(i / s2);
             for (Neuron neuron2 : hidden) {

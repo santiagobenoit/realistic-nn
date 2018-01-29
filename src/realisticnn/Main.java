@@ -2,6 +2,8 @@ package realisticnn;
 
 import realisticnn.environment.Environment;
 import realisticnn.environment.EnvironmentChat;
+import realisticnn.environment.EnvironmentTest;
+import realisticnn.environment.EnvironmentTest2;
 import realisticnn.neuralnetwork.NeuralNetwork;
 
 public class Main { // temporary test class
@@ -11,14 +13,15 @@ public class Main { // temporary test class
     public static void main(String[] args) {
         //System.out.println(Runtime.getRuntime().maxMemory() / 1048576d);
         System.out.println("Creating neurons...");
-        NeuralNetwork network = new NeuralNetwork(2049, 10000, 11);
+        //NeuralNetwork network = new NeuralNetwork(2049, 10000, 13);
+        NeuralNetwork network = new NeuralNetwork(2, 300, 4);
         System.out.println("Connecting neurons...");
-        network.randomlyConnect(100);
+        network.randomlyConnect(25);
         //network.fullyConnect();
         System.out.println("Initializing weights...");
         network.randomizeWeights();
         System.out.println("Initializing environment...");
-        Environment environment = new EnvironmentChat();
+        Environment environment = new EnvironmentTest2();
         environment.addNeuralNetwork(network);
         System.out.println("Done. Starting simulation...");
         environment.start(100);

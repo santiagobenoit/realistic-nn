@@ -46,7 +46,8 @@ public class EnvironmentChat extends Environment {
                     String next;
                     while ((next = scanner.nextLine()).isEmpty());
                     next = "User: " + next;
-                    history.add(0, next);
+                    history.add(next);
+                    index = history.size() - 1;
                     System.out.println(next);
                 }
             }).start();
@@ -73,9 +74,20 @@ public class EnvironmentChat extends Environment {
             case 9: // submit message
                 if (!message.isEmpty()) {
                     String next = "Bot: " + message;
-                    history.add(0, next);
+                    history.add(next);
+                    index = history.size() - 1;
                     System.out.println(next);
                     message = "";
+                }
+                break;
+            case 10: // move history index up (towards newer)
+                if (index < history.size()) {
+                    index++;
+                }
+                break;
+            case 11: // move history index down (towards older)
+                if (index > 0) {
+                    index--;
                 }
                 break;
             default: // do nothing
@@ -89,11 +101,14 @@ public class EnvironmentChat extends Environment {
         //System.out.println(Arrays.toString(view.getBytes()));
         //System.out.println(view);
         BitSet bs;
-        if (index >= 0) {
+        if (index < history.size()) {
+            //System.out.println(history.get(index));
             bs = BitSet.valueOf(history.get(index).getBytes());
         } else {
-            bs = BitSet.valueOf(message.getBytes());
+            //System.out.println(message + new String(bits.toByteArray()));
+            bs = BitSet.valueOf((message + new String(bits.toByteArray())).getBytes());
         }
+        //bs.set(INPUT_NEURONS - 1, true);
         //System.out.println(bs.size());
         for (int i = 0; i < bs.size(); i++) {
             data[i] = bs.get(i) ? 1.0 : 0.0;
